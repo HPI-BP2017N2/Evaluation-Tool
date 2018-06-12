@@ -5,7 +5,6 @@ import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-
 public class SelectorMap extends EnumMap<OfferAttribute, Set<Selector>> {
 
     SelectorMap() {

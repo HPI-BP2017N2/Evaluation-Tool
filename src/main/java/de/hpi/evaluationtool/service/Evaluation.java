@@ -14,24 +14,50 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
 @Getter(AccessLevel.PRIVATE)
 @RequiredArgsConstructor
+@Component
 public class Evaluation {
 
     private final ISampleOfferRepository sampleOfferRepository;
 
     private final ISamplePageRepository samplePageRepository;
 
+    private final RestTemplate restTemplate;
+
     private final ShopRulesRepository shopRulesRepository;
 
     @EventListener(ApplicationReadyEvent.class)
+    public void generateRules() {
+        for (SampleOffer offer : getSampleOfferRepository().findAll()) {
+            try {
+                System.out.println(getRestTemplate().getForObject(startRulesGenerationURI(offer.getShopID()), String
+                        .class));
+            } catch (HttpClientErrorException ignored) {}
+        }
+    }
+
+    private URI startRulesGenerationURI(long shopID) {
+        return UriComponentsBuilder.fromUriString("http://localhost:1981")
+                .path("/getRules/" + shopID)
+                .build()
+                .encode()
+                .toUri();
+    }
+
+//    @EventListener(ApplicationReadyEvent.class)
     public void evaluate() {
         Set<String> collectionNames = getShopRulesRepository().getCollectionNames();
         for (String collection : collectionNames) {
@@ -76,7 +102,7 @@ public class Evaluation {
         header[0] = "Shop";
         for (int iOfferAttribute = 0; iOfferAttribute < OfferAttribute.values().length; iOfferAttribute++) {
             header[1 + iOfferAttribute] = OfferAttribute.values()[iOfferAttribute].toString();
-            header[1 + iOfferAttribute + OfferAttribute.values().length] = OfferAttribute.values()[iOfferAttribute].toString();
+            header[1 + iOfferAttribute + OfferAttribute.values().length] = "MM_" + OfferAttribute.values()[iOfferAttribute].toString();
         }
         return header;
     }
@@ -87,8 +113,8 @@ public class Evaluation {
         List<Mismatch> mismatches = new LinkedList<>();
         SampleOffer sampleOffer = getSampleOfferRepository().findByShopID(rules.getShopID())
                 .orElseThrow(() -> new Exception("Fatal error occurred. Could not find sampleOffer for shop."));
-        for (IdealoOffer offer : sampleOffer.getIdealoOffers()) {
-            updateMetricsFor(rules, offer, matchCount, mismatchCount, mismatches);
+        for (int iOffer = 50; iOffer < sampleOffer.getIdealoOffers().size(); iOffer++) {
+            updateMetricsFor(rules, sampleOffer.getIdealoOffers().get(iOffer), matchCount, mismatchCount, mismatches);
         }
         updateTables(metricsTable, mismatchTable, matchCount, mismatchCount, mismatches, rules.getShopID());
     }
@@ -123,7 +149,8 @@ public class Evaluation {
 
     private void updateMetricsFor(ShopRules rules, IdealoOffer offer, EnumMap<OfferAttribute, Integer>
             matchCount, EnumMap<OfferAttribute, Integer> mismatchCount, List<Mismatch> mismatches) {
-        String html = getSamplePageRepository().findById(offer.get(OfferAttribute.URL).get(0)).get().getHtml();
+        String html = getSamplePageRepository().findById(offer.get(OfferAttribute.URL).get(0).replace("http://localhost:5221/fetchPage/", "")).get()
+                .getHtml();
         Document document = Jsoup.parse(html);
         Map<OfferAttribute, String> extractedData = Parser.extractData(rules.getSelectorMap(), document);
 
