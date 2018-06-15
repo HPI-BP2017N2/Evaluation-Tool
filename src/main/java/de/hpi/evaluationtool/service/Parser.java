@@ -8,7 +8,7 @@ import static de.hpi.evaluationtool.service.Normalizer.normalizeData;
 
 public class Parser {
 
-    public static Map<OfferAttribute, String> extractData(EnumMap<OfferAttribute, Set<Selector>> selectorMap, Document
+    public static Map<OfferAttribute, String> extractData(SelectorMap selectorMap, Document
             page) {
         Map<OfferAttribute, String> extractedData = new EnumMap<>(OfferAttribute.class);
         selectorMap.forEach((offerAttribute, selectors) -> {

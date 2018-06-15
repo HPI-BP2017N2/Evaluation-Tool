@@ -16,11 +16,11 @@ import lombok.ToString;
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "type")
+        property = "nodeType")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = AttributeNodeSelector.class, name = "attributeNodeSelector"),
-        @JsonSubTypes.Type(value = DataNodeSelector.class, name = "dataNodeSelector"),
-        @JsonSubTypes.Type(value = TextNodeSelector.class, name = "textNodeSelector")
+        @JsonSubTypes.Type(value = AttributeNodeSelector.class, name = "ATTRIBUTE_NODE"),
+        @JsonSubTypes.Type(value = DataNodeSelector.class, name = "DATA_NODE"),
+        @JsonSubTypes.Type(value = TextNodeSelector.class, name = "TEXT_NODE")
 })
 abstract class Selector {
 

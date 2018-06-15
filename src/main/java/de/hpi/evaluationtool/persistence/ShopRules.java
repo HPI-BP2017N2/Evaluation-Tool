@@ -1,20 +1,20 @@
 package de.hpi.evaluationtool.persistence;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.hpi.evaluationtool.service.SelectorMap;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "S50N100")
 @Getter
-@RequiredArgsConstructor
 @ToString
+@Setter
 public class ShopRules {
 
-    private final SelectorMap selectorMap;
+    private SelectorMap selectorMap;
 
     @Id
-    private final long shopID;
+    @JsonProperty(value = "_id")
+    private long shopID;
 }

@@ -9,6 +9,8 @@ import java.util.List;
 @Getter
 public class Mismatch {
 
+    private final int distance;
+
     private final List<String> expected;
 
     private final long shopID;
@@ -16,7 +18,6 @@ public class Mismatch {
     private final OfferAttribute offerAttribute;
 
     private final String actual;
-
 
     private final String url;
 
