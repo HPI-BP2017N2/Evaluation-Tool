@@ -35,19 +35,20 @@ public class AsyncEvaluation {
 
     private final Levenshtein levenshtein = new Levenshtein();
 
-    //    @Async("threadpool")
+    @Async("threadpool")
     public void saveEvaluationForCollection(String collection) {
         List<String[]> metricsTable = new LinkedList<>();
         metricsTable.add(createMetricsTableHeader());
         List<String[]> mismatchTable = new LinkedList<>();
         mismatchTable.add(createMismatchTableHeader());
-        int emptyIdealo = 0;
         for (ShopRules rules : getShopRulesRepository().getAllRulesOfCollection(collection)) {
             System.out.println("Processing shop " + rules.getShopID() + " of " + collection);
-            emptyIdealo += addMetricsFor(rules, metricsTable, mismatchTable);
+            try {
+                addMetricsFor(rules, metricsTable, mismatchTable);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        System.out.println(emptyIdealo);
-        System.exit(0);
         System.out.println("Completed collection " + collection);
         try {
             save("./" + collection + "-metrics.csv", metricsTable);
@@ -82,22 +83,15 @@ public class AsyncEvaluation {
         return header;
     }
 
-    private int addMetricsFor(ShopRules rules, List<String[]> metricsTable, List<String[]> mismatchTable) {
+    private void addMetricsFor(ShopRules rules, List<String[]> metricsTable, List<String[]> mismatchTable) throws Exception {
         EnumMap<OfferAttribute, Integer> matchCount = createEmptyMap();
         EnumMap<OfferAttribute, Integer> mismatchCount = createEmptyMap();
         List<Mismatch> mismatches = new LinkedList<>();
         IdealoOffers idealoOffers = getEvaluationBridge().getSampleOffers(rules.getShopID());
-        int emptyIdealo = 0;
         for (int iOffer = 50; iOffer < idealoOffers.size(); iOffer++) {
-            for (OfferAttribute offerAttribute : OfferAttribute.values()) {
-                if (idealoOffers.get(iOffer).get(offerAttribute).stream().map(attribute -> attribute.replace(" ", ""))
-                        .allMatch(String::isEmpty))
-                    emptyIdealo++;
-            }
-//            updateMetricsFor(rules, idealoOffers.get(iOffer), matchCount, mismatchCount, mismatches);
+            updateMetricsFor(rules, idealoOffers.get(iOffer), matchCount, mismatchCount, mismatches);
         }
         updateTables(metricsTable, mismatchTable, matchCount, mismatchCount, mismatches, rules.getShopID());
-        return emptyIdealo;
     }
 
     private EnumMap<OfferAttribute, Integer> createEmptyMap(){
